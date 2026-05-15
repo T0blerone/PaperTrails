@@ -10,6 +10,7 @@
             "includePath": [
                 "/Users/toby/Documents/Projects/PaperTrails/firmware/include",
                 "/Users/toby/Documents/Projects/PaperTrails/firmware/src",
+                "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266HTTPClient/src",
                 "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266WiFi/src",
                 "/Users/toby/Documents/Projects/PaperTrails/firmware/.pio/libdeps/d1_mini/EspSoftwareSerial/src",
                 "/Users/toby/Documents/Projects/PaperTrails/firmware/.pio/libdeps/d1_mini/ghostl/src",
@@ -23,7 +24,6 @@
                 "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/DNSServer/src",
                 "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/EEPROM",
                 "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266AVRISP/src",
-                "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266HTTPClient/src",
                 "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266HTTPUpdateServer/src",
                 "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266LLMNR",
                 "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266NetBIOS",
@@ -62,6 +62,7 @@
                 "path": [
                     "/Users/toby/Documents/Projects/PaperTrails/firmware/include",
                     "/Users/toby/Documents/Projects/PaperTrails/firmware/src",
+                    "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266HTTPClient/src",
                     "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266WiFi/src",
                     "/Users/toby/Documents/Projects/PaperTrails/firmware/.pio/libdeps/d1_mini/EspSoftwareSerial/src",
                     "/Users/toby/Documents/Projects/PaperTrails/firmware/.pio/libdeps/d1_mini/ghostl/src",
@@ -75,7 +76,6 @@
                     "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/DNSServer/src",
                     "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/EEPROM",
                     "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266AVRISP/src",
-                    "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266HTTPClient/src",
                     "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266HTTPUpdateServer/src",
                     "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266LLMNR",
                     "/Users/toby/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266NetBIOS",

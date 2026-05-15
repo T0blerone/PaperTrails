@@ -7,11 +7,13 @@
 
 #include "config.h"
 
-SoftwareSerial printer(PRINTER_RX_PIN, PRINTER_TX_PIN);
+SoftwareSerial softwarePrinter(PRINTER_RX_PIN, PRINTER_TX_PIN);
+Print *printer = nullptr;
 
 const uint16_t MAX_CHARS_PER_LINE = 32;
 const uint16_t MAX_NOTE_CHARS = 800;
 const uint32_t WIFI_CONNECT_TIMEOUT_MS = 20000;
+const uint32_t POLL_INTERVAL_MS = 60UL * 1000UL;
 const uint64_t SLEEP_AFTER_POLL_US = 60ULL * 1000ULL * 1000ULL;
 
 struct PendingNote {
@@ -35,8 +37,11 @@ String encodePathSegment(const String &value);
 void printNote(const PendingNote &note);
 void printWrapped(const String &text);
 void printSeparator();
+void printLine(const String &text);
+void printBlankLine();
 void finishPrinting();
-void deepSleep();
+void pauseWiFiForPrinting();
+void waitForNextPoll();
 
 void setup() {
   Serial.begin(115200);
@@ -45,13 +50,19 @@ void setup() {
   initializePrinter();
 
   if (!connectWiFi()) {
-    Serial.println("Wi-Fi unavailable; sleeping until next poll.");
-    deepSleep();
+    Serial.println("Wi-Fi unavailable; waiting until next poll.");
+    waitForNextPoll();
   }
 
   PendingNote note = pollNextNote();
   if (note.available) {
+    pauseWiFiForPrinting();
     printNote(note);
+
+    if (!connectWiFi()) {
+      Serial.println("Printed note, but Wi-Fi did not reconnect for acknowledgement.");
+      waitForNextPoll();
+    }
 
     if (!acknowledgePrinted(note.id)) {
       Serial.println("Printed note, but printed acknowledgement failed.");
@@ -60,18 +71,47 @@ void setup() {
     Serial.println("No pending note.");
   }
 
-  deepSleep();
+  waitForNextPoll();
 }
 
 void loop() {
+#if !USE_DEEP_SLEEP
+  if (!connectWiFi()) {
+    Serial.println("Wi-Fi unavailable; waiting until next poll.");
+    waitForNextPoll();
+    return;
+  }
+
+  PendingNote note = pollNextNote();
+  if (note.available) {
+    pauseWiFiForPrinting();
+    printNote(note);
+
+    if (connectWiFi() && !acknowledgePrinted(note.id)) {
+      Serial.println("Printed note, but printed acknowledgement failed.");
+    }
+  } else {
+    Serial.println("No pending note.");
+  }
+
+  waitForNextPoll();
+#endif
 }
 
 void initializePrinter() {
-  printer.begin(PRINTER_BAUD_RATE);
+#if PRINTER_USE_SERIAL1
+  Serial1.begin(PRINTER_BAUD_RATE);
+  printer = &Serial1;
+#else
+  softwarePrinter.begin(PRINTER_BAUD_RATE);
+  softwarePrinter.enableIntTx(false);
+  printer = &softwarePrinter;
+#endif
+
   delay(500);
 
-  printer.write(0x1B);
-  printer.write(0x40);
+  printer->write(0x1B);
+  printer->write(0x40);
 }
 
 bool connectWiFi() {
@@ -277,16 +317,16 @@ String encodePathSegment(const String &value) {
 }
 
 void printNote(const PendingNote &note) {
-  printer.println();
+  printBlankLine();
   printSeparator();
 
   if (note.sender.length() > 0) {
-    printer.print("From: ");
-    printer.println(note.sender);
+    printer->print("From: ");
+    printLine(note.sender);
   }
 
   if (note.createdAt.length() > 0) {
-    printer.println(note.createdAt);
+    printLine(note.createdAt);
   }
 
   printSeparator();
@@ -300,7 +340,7 @@ void printWrapped(const String &text) {
 
   while (cursor < text.length()) {
     if (text[cursor] == '\n') {
-      printer.println();
+      printBlankLine();
       cursor++;
       continue;
     }
@@ -324,7 +364,7 @@ void printWrapped(const String &text) {
 
     String line = text.substring(cursor, lineEnd);
     line.trim();
-    printer.println(line);
+    printLine(line);
 
     cursor = lineEnd;
     while (cursor < text.length() && text[cursor] == ' ') {
@@ -336,17 +376,45 @@ void printWrapped(const String &text) {
 }
 
 void printSeparator() {
-  printer.println("------------------------------");
+  printLine("------------------------------");
+}
+
+void printLine(const String &text) {
+  printer->println(text);
+  delay(PRINTER_LINE_DELAY_MS);
+}
+
+void printBlankLine() {
+  printer->println();
+  delay(PRINTER_LINE_DELAY_MS);
 }
 
 void finishPrinting() {
-  printer.write(0x1B);
-  printer.write(0x64);
-  printer.write(4);
+  printer->write(0x1B);
+  printer->write(0x64);
+  printer->write(4);
+  delay(250);
 }
 
-void deepSleep() {
+void pauseWiFiForPrinting() {
+  WiFi.disconnect(false);
+  WiFi.mode(WIFI_OFF);
+  WiFi.forceSleepBegin();
+  delay(100);
+}
+
+void waitForNextPoll() {
+#if USE_DEEP_SLEEP
   Serial.println("Sleeping.");
   Serial.flush();
   ESP.deepSleep(SLEEP_AFTER_POLL_US);
+#else
+  WiFi.disconnect(false);
+  WiFi.mode(WIFI_OFF);
+  WiFi.forceSleepBegin();
+  Serial.println("Waiting.");
+  delay(POLL_INTERVAL_MS);
+  WiFi.forceSleepWake();
+  delay(100);
+#endif
 }
